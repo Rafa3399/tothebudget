@@ -1,91 +1,118 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { AuthContext } from "../context/auth.context";
 
-const Dashboard = ({API}) => {
-    const [data, setData] = useState({
-        accounts: [],
-        expenses: [],
-        profits: [],
-        recurringExpenses: [],
-        expenseCategories: [],
-        profitCategories: []
+const Dashboard = ({ API }) => {
+    const [showForm, setShowForm] = useState(null);
+    const [formData, setFormData] = useState({
+        accountName: '',
+        accountBalance: 0,
     });
+    const [accounts, setAccounts] = useState([]);
+    const [error, setError] = useState('');
 
-    const token = localStorage.getItem('token');
+    const { user } = useContext(AuthContext);
+    const userId = user?._id; 
 
     useEffect(() => {
-        if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (!userId) return; // Prevent fetching if user ID is not available
 
-            const fetchData = async () => {
-                try {
-                    const userId = 'your_user_id';
-                    const [accounts, expenses, profits, recurringExpenses, expenseCategories, profitCategories] = await Promise.all([
-                        axios.get(`${API}/api/accounts/${userId}`),
-                        axios.get(`${API}/api/expenses/${userId}`),
-                        axios.get(`${API}/api/profits/${userId}`),
-                        axios.get(`${API}/api/recurring-expenses/${userId}`),
-                        axios.get(`${API}/api/expense-categories/${userId}`),
-                        axios.get(`${API}/api/profit-categories/${userId}`)
-                    ]);
-                    setData({
-                        accounts: accounts.data,
-                        expenses: expenses.data,
-                        profits: profits.data,
-                        recurringExpenses: recurringExpenses.data,
-                        expenseCategories: expenseCategories.data,
-                        profitCategories: profitCategories.data
-                    });
-                } catch (err) {
-                    console.error('Error fetching data', err);
-                }
-            };
+        const fetchAccounts = async () => {
+            try {
+                const response = await axios.get(`${API}/api/accounts/${userId}`);
+                setAccounts(response.data);
+            } catch (err) {
+                setError('Failed to fetch accounts');
+            }
+        };
 
-            fetchData();
+        fetchAccounts();
+    }, [userId, API]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // Ensure all required fields are not empty
+        if (!formData.accountName.trim() || formData.accountBalance === '') {
+            setError('Please provide all required fields.');
+            return;
         }
-    }, [token]);
+
+        // Logging data to be sent to backend for debugging
+        console.log('Submitting data:', {
+            name: formData.accountName,
+            balance: formData.accountBalance,
+            user: userId
+        });
+
+        try {
+            const response = await axios.post(`${API}/api/accounts`, {
+                name: formData.accountName,
+                balance: formData.accountBalance,
+                user: userId
+            });
+
+            // Update state to include new account
+            setAccounts([...accounts, response.data]);
+
+            // Clear form and hide it
+            setFormData({ accountName: '', accountBalance: 0 });
+            setShowForm(null);
+        } catch (err) {
+            console.error('Error submitting form:', err.response ? err.response.data : err.message);
+            setError('Operation failed!');
+        }
+    };
+
+    const handleAccountClick = (accountId) => {
+        console.log('Account ID:', accountId);
+        // Implement navigation or other actions based on the accountId
+    };
 
     return (
         <div>
             <h1>Dashboard</h1>
-            <h2>Accounts</h2>
-            <ul>
-                {data.accounts.map(account => (
-                    <li key={account._id}>{account.name}: ${account.balance}</li>
-                ))}
-            </ul>
-            <h2>Expenses</h2>
-            <ul>
-                {data.expenses.map(expense => (
-                    <li key={expense._id}>{expense.description}: ${expense.amount}</li>
-                ))}
-            </ul>
-            <h2>Profits</h2>
-            <ul>
-                {data.profits.map(profit => (
-                    <li key={profit._id}>{profit.description}: ${profit.amount}</li>
-                ))}
-            </ul>
-            <h2>Recurring Expenses</h2>
-            <ul>
-                {data.recurringExpenses.map(recurringExpense => (
-                    <li key={recurringExpense._id}>{recurringExpense.description}: ${recurringExpense.amount} ({recurringExpense.frequency})</li>
-                ))}
-            </ul>
-            <h2>Expense Categories</h2>
-            <ul>
-                {data.expenseCategories.map(category => (
-                    <li key={category._id}>{category.name} - {category.type}</li>
-                ))}
-            </ul>
-            <h2>Profit Categories</h2>
-            <ul>
-                {data.profitCategories.map(category => (
-                    <li key={category._id}>{category.name} - {category.type}</li>
-                ))}
-            </ul>
+
+            {error && <p>{error}</p>}
+
+            <h2>Your Accounts</h2>
+            {accounts.length > 0 ? (
+                accounts.map(account => (
+                    <div key={account._id} onClick={() => handleAccountClick(account._id)} style={{ cursor: 'pointer', marginBottom: '10px' }}>
+                        <h3>{account.name}</h3>
+                        <p>Balance: {account.balance}€</p>
+                    </div>
+                ))
+            ) : (
+                <p>No accounts available. Please create one.</p>
+            )}
+
+            <button onClick={() => setShowForm('account')}>Create New Account</button>
+
+            {showForm === 'account' && (
+                <form onSubmit={handleSubmit}>
+                    <h2>Create New Account</h2>
+                    <input
+                        type="text"
+                        placeholder="Account Name"
+                        value={formData.accountName}
+                        onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
+                        required
+                    />
+                    <input
+                        type="number"
+                        placeholder="Account Balance"
+                        value={formData.accountBalance}
+                        onChange={(e) => setFormData({ ...formData, accountBalance: e.target.value })}
+                        required
+                    />
+                    <button type="submit">Submit</button>
+                    <button type="button" onClick={() => setShowForm(null)}>Cancel</button>
+                </form>
+            )}
         </div>
     );
 };
 
 export default Dashboard;
+
