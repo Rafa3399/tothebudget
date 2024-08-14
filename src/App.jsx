@@ -7,7 +7,7 @@ import { AuthWrapper } from './context/auth.context';
 import './App.css';
 
 function App() {
-  const API = "http://localhost:5005";
+  const API = "https://tothebudget.adaptable.app/";
   
   return (
     <Router>
