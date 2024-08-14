@@ -7,7 +7,7 @@ import {API_URL} from '../config.js'
 const AccountDetails = () => {
     const { accountId } = useParams();
     const navigate = useNavigate();
-    const { user, isLoggedIn } = useContext(AuthContext);
+    const { isLoggedIn } = useContext(AuthContext);
     const [account, setAccount] = useState(null);
     const [expenses, setExpenses] = useState([]);
     const [profits, setProfits] = useState([]);
@@ -66,7 +66,7 @@ const AccountDetails = () => {
         fetchAccountDetails();
         fetchExpensesAndProfits();
         fetchCategories();
-    }, [accountId, isLoggedIn, navigate, API]);
+    }, [accountId, isLoggedIn, navigate, API_URL]);
 
     const handleSubmit = async (e, type) => {
         e.preventDefault();

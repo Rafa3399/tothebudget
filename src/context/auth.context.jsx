@@ -1,42 +1,53 @@
 import axios from "axios";
 import { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {API_URL} from '../config.js'
-//this creates the context (first step)
+import { API_URL } from '../config.js';
+
+// Create the context
 const AuthContext = createContext();
 
-//this creates the wrapper (second step)
+// Create the provider
 const AuthWrapper = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const nav = useNavigate();
+
   useEffect(() => {
     authenticateUser();
   }, []);
-  //this function makes an axios call to the /verify route to check the token from the localstorage
+
+  // Function to authenticate user
   const authenticateUser = async () => {
     try {
       const tokenFromStorage = localStorage.getItem("authToken");
-      const { data } = await axios.get(`${API_URL}/auth/verify`, {
-        headers: { authorization: `Bearer ${tokenFromStorage}` },
-      });
-      console.log("verify route successful", data);
-      setUser(data);
-      setIsLoading(false);
-      setIsLoggedIn(true);
+      if (tokenFromStorage) {
+        const { data } = await axios.get(`${API_URL}/auth/verify`, {
+          headers: { authorization: `Bearer ${tokenFromStorage}` },
+        });
+        console.log("verify route successful", data);
+        setUser(data);
+        setIsLoggedIn(true);
+      } else {
+        throw new Error("No token found");
+      }
     } catch (error) {
       console.log("error verifying the user", error);
       setUser(null);
-      setIsLoading(false);
       setIsLoggedIn(false);
+    } finally {
+      setIsLoading(false);
     }
   };
-  //this function handles logging the user out and navigating to the login page
+
+  // Function to handle logout
   const handleLogout = () => {
     localStorage.removeItem("authToken");
-    nav("/login");
+    setUser(null); // Clear user state
+    setIsLoggedIn(false); // Update logged-in status
+    nav("/login"); // Navigate to login page
   };
+
   return (
     <AuthContext.Provider
       value={{ user, isLoading, isLoggedIn, authenticateUser, handleLogout }}
@@ -45,5 +56,5 @@ const AuthWrapper = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-//always remember to export both
+
 export { AuthContext, AuthWrapper };

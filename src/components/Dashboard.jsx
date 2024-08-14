@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from "../context/auth.context";
 import { useNavigate } from 'react-router-dom';
-import {API_URL} from '../config.js'
+import { API_URL } from '../config.js';
 
 const Dashboard = () => {
     const [showForm, setShowForm] = useState(null);
@@ -30,7 +30,7 @@ const Dashboard = () => {
         };
 
         fetchAccounts();
-    }, [userId, API_URL]);
+    }, [userId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -51,7 +51,6 @@ const Dashboard = () => {
             setFormData({ accountName: '', accountBalance: 0 });
             setShowForm(null);
         } catch (err) {
-            console.error('Error submitting form:', err.response ? err.response.data : err.message);
             setError('Operation failed!');
         }
     };
@@ -61,45 +60,46 @@ const Dashboard = () => {
     };
 
     return (
-        <div>
-            <h1>Dashboard</h1>
-            {error && <p>{error}</p>}
+        <div className="container">
+            <h1>Welcome, {user?.name}!</h1>
 
-            <h2>Your Accounts</h2>
-            {accounts.length > 0 ? (
-                accounts.map(account => (
-                    <div key={account._id} onClick={() => handleAccountClick(account._id)} style={{ cursor: 'pointer', marginBottom: '10px' }}>
-                        <h3>{account.name}</h3>
-                        <p>Balance: ${account.balance}</p>
-                    </div>
-                ))
-            ) : (
-                <p>No accounts available. Please create one.</p>
-            )}
-
-            <button onClick={() => setShowForm('account')}>Create New Account</button>
+            <fieldset>
+                <legend>Accounts</legend>
+                {accounts.length > 0 ? (
+                    accounts.map(account => (
+                        <div key={account._id} className="account-card" onClick={() => handleAccountClick(account._id)}>
+                            <h3>{account.name}</h3>
+                            <p>Balance: ${account.balance}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p>No accounts yet. Please add one!</p>
+                )}
+                <button onClick={() => setShowForm('account')}>Add Account</button>
+            </fieldset>
 
             {showForm === 'account' && (
                 <form onSubmit={handleSubmit}>
-                    <h2>Create New Account</h2>
                     <input
                         type="text"
-                        placeholder="Account Name"
+                        name="accountName"
                         value={formData.accountName}
                         onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
-                        required
+                        placeholder="Account Name"
                     />
                     <input
                         type="number"
-                        placeholder="Account Balance"
+                        name="accountBalance"
                         value={formData.accountBalance}
-                        onChange={(e) => setFormData({ ...formData, accountBalance: e.target.value })}
-                        required
+                        onChange={(e) => setFormData({ ...formData, accountBalance: parseFloat(e.target.value) })}
+                        placeholder="Starting Balance"
                     />
-                    <button type="submit">Submit</button>
+                    <button type="submit">Add Account</button>
                     <button type="button" onClick={() => setShowForm(null)}>Cancel</button>
                 </form>
             )}
+
+            {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
     );
 };

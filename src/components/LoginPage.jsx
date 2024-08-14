@@ -2,7 +2,7 @@ import { useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from "../context/auth.context";
-import {API_URL} from '../config.js'
+import { API_URL } from '../config.js';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -14,7 +14,6 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const { authenticateUser } = useContext(AuthContext);
 
-    // Handle user login
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
@@ -28,7 +27,6 @@ const LoginPage = () => {
         }
     };
 
-    // Handle user signup
     const handleSignup = async (e) => {
         e.preventDefault();
         try {
@@ -41,15 +39,12 @@ const LoginPage = () => {
     };
 
     return (
-        <div>
-            <h1>Welcome to Expense Tracker</h1>
-            <p>
-                Manage your finances efficiently with our Expense Tracker. 
-                Keep track of your expenses, profits, and recurring payments all in one place.
-            </p>
-
+        <div className="container">
+            <h1>Expense Tracker</h1>
+            <p>Manage your finances efficiently with our Expense Tracker.</p>
+            
             {isSignup ? (
-                <div>
+                <>
                     <h2>Sign Up</h2>
                     <form onSubmit={handleSignup}>
                         <input
@@ -69,9 +64,9 @@ const LoginPage = () => {
                         <button type="submit">Sign Up</button>
                         <button type="button" onClick={() => setIsSignup(false)}>Back to Login</button>
                     </form>
-                </div>
+                </>
             ) : (
-                <div>
+                <>
                     <h2>Login</h2>
                     <form onSubmit={handleLogin}>
                         <input
@@ -91,10 +86,10 @@ const LoginPage = () => {
                         <button type="submit">Login</button>
                         <button type="button" onClick={() => setIsSignup(true)}>Create an Account</button>
                     </form>
-                </div>
+                </>
             )}
-
-            {error && <p>{error}</p>}
+            
+            {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
     );
 };
