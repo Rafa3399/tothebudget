@@ -1,17 +1,27 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
-import './App.css'
+import AccountDetails from './components/AccountDetails';
+import Header from './components/Header';
+import { AuthWrapper } from './context/auth.context';
+import './App.css';
 
-function  App () {
+function App() {
   const API = "http://localhost:5005";
-    return (
-            <Routes>
-                <Route path="/dashboard" element={<Dashboard API={API}/>} />
-                <Route path="/" element={<LoginPage API={API} />} />
-            </Routes>
-    );
-};
+  
+  return (
+    <Router>
+      <AuthWrapper>
+      <Header />
+      <Routes>
+        <Route path="/" element={<LoginPage API={API} />} />
+        <Route path="/dashboard" element={<Dashboard API={API} />} />
+        <Route path="/accounts/:accountId" element={<AccountDetails API={API}  />} />
+      </Routes>
+      </AuthWrapper>
+    </Router>
+
+  );
+}
 
 export default App;

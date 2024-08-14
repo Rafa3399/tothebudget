@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from "../context/auth.context";
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = ({ API }) => {
     const [showForm, setShowForm] = useState(null);
@@ -13,9 +14,10 @@ const Dashboard = ({ API }) => {
 
     const { user } = useContext(AuthContext);
     const userId = user?._id; 
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (!userId) return; // Prevent fetching if user ID is not available
+        if (!userId) return;
 
         const fetchAccounts = async () => {
             try {
@@ -32,18 +34,10 @@ const Dashboard = ({ API }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Ensure all required fields are not empty
         if (!formData.accountName.trim() || formData.accountBalance === '') {
             setError('Please provide all required fields.');
             return;
         }
-
-        // Logging data to be sent to backend for debugging
-        console.log('Submitting data:', {
-            name: formData.accountName,
-            balance: formData.accountBalance,
-            user: userId
-        });
 
         try {
             const response = await axios.post(`${API}/api/accounts`, {
@@ -52,10 +46,7 @@ const Dashboard = ({ API }) => {
                 user: userId
             });
 
-            // Update state to include new account
             setAccounts([...accounts, response.data]);
-
-            // Clear form and hide it
             setFormData({ accountName: '', accountBalance: 0 });
             setShowForm(null);
         } catch (err) {
@@ -65,14 +56,12 @@ const Dashboard = ({ API }) => {
     };
 
     const handleAccountClick = (accountId) => {
-        console.log('Account ID:', accountId);
-        // Implement navigation or other actions based on the accountId
+        navigate(`/accounts/${accountId}`);
     };
 
     return (
         <div>
             <h1>Dashboard</h1>
-
             {error && <p>{error}</p>}
 
             <h2>Your Accounts</h2>
@@ -80,7 +69,7 @@ const Dashboard = ({ API }) => {
                 accounts.map(account => (
                     <div key={account._id} onClick={() => handleAccountClick(account._id)} style={{ cursor: 'pointer', marginBottom: '10px' }}>
                         <h3>{account.name}</h3>
-                        <p>Balance: {account.balance}€</p>
+                        <p>Balance: ${account.balance}</p>
                     </div>
                 ))
             ) : (
@@ -115,4 +104,3 @@ const Dashboard = ({ API }) => {
 };
 
 export default Dashboard;
-
