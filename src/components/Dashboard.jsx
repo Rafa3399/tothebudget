@@ -2,8 +2,9 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from "../context/auth.context";
 import { useNavigate } from 'react-router-dom';
+import {API_URL} from '../config.js'
 
-const Dashboard = ({ API }) => {
+const Dashboard = () => {
     const [showForm, setShowForm] = useState(null);
     const [formData, setFormData] = useState({
         accountName: '',
@@ -21,7 +22,7 @@ const Dashboard = ({ API }) => {
 
         const fetchAccounts = async () => {
             try {
-                const response = await axios.get(`${API}/api/accounts/${userId}`);
+                const response = await axios.get(`${API_URL}/api/accounts/${userId}`);
                 setAccounts(response.data);
             } catch (err) {
                 setError('Failed to fetch accounts');
@@ -29,7 +30,7 @@ const Dashboard = ({ API }) => {
         };
 
         fetchAccounts();
-    }, [userId, API]);
+    }, [userId, API_URL]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -40,7 +41,7 @@ const Dashboard = ({ API }) => {
         }
 
         try {
-            const response = await axios.post(`${API}/api/accounts`, {
+            const response = await axios.post(`${API_URL}/api/accounts`, {
                 name: formData.accountName,
                 balance: formData.accountBalance,
                 user: userId

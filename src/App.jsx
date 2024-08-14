@@ -7,16 +7,15 @@ import { AuthWrapper } from './context/auth.context';
 import './App.css';
 
 function App() {
-  const API = "https://tothebudget.adaptable.app/";
   
   return (
     <Router>
       <AuthWrapper>
       <Header />
       <Routes>
-        <Route path="/" element={<LoginPage API={API} />} />
-        <Route path="/dashboard" element={<Dashboard API={API} />} />
-        <Route path="/accounts/:accountId" element={<AccountDetails API={API}  />} />
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/accounts/:accountId" element={<AccountDetails />} />
       </Routes>
       </AuthWrapper>
     </Router>

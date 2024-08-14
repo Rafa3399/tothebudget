@@ -2,8 +2,9 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from "../context/auth.context";
 import axios from 'axios';
+import {API_URL} from '../config.js'
 
-const AccountDetails = ({ API }) => {
+const AccountDetails = () => {
     const { accountId } = useParams();
     const navigate = useNavigate();
     const { user, isLoggedIn } = useContext(AuthContext);
@@ -32,7 +33,7 @@ const AccountDetails = ({ API }) => {
 
         const fetchAccountDetails = async () => {
             try {
-                const response = await axios.get(`${API}/api/accounts/${accountId}`);
+                const response = await axios.get(`${API_URL}/api/accounts/${accountId}`);
                 setAccount(response.data);
                 console.log(response.data)
             } catch (err) {
@@ -43,8 +44,8 @@ const AccountDetails = ({ API }) => {
         const fetchExpensesAndProfits = async () => {
             try {
                 const [expensesResponse, profitsResponse] = await Promise.all([
-                    axios.get(`${API}/api/expenses/account/${accountId}`),
-                    axios.get(`${API}/api/profits/account/${accountId}`)
+                    axios.get(`${API_URL}/api/expenses/account/${accountId}`),
+                    axios.get(`${API_URL}/api/profits/account/${accountId}`)
                 ]);
                 setExpenses(expensesResponse.data);
                 setProfits(profitsResponse.data);
@@ -55,7 +56,7 @@ const AccountDetails = ({ API }) => {
 
         const fetchCategories = async () => {
             try {
-                const response = await axios.get(`${API}/api/expense-categories`);
+                const response = await axios.get(`${API_URL}/api/expense-categories`);
                 setCategories(response.data);
             } catch (err) {
                 setError('Failed to fetch categories');
@@ -71,7 +72,7 @@ const AccountDetails = ({ API }) => {
         e.preventDefault();
         try {
             const token = localStorage.getItem("authToken");
-            const url = `${API}/api/${type}`;
+            const url = `${API_URL}/api/${type}`;
             const data = {
                 amount: type.includes('expenses') ? formData.expenseAmount : formData.profitAmount,
                 category: type.includes('expenses') ? formData.expenseCategory : formData.profitCategory,
