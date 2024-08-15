@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
-import AccountDetails from './components/AccountDetails';
+import AccountDetailsPage from './components/AccountDetailsPage';
 import Header from './components/Header';
 import { AuthWrapper } from './context/auth.context';
 import './App.css';
@@ -15,7 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/accounts/:accountId" element={<AccountDetails />} />
+        <Route path="/accounts/:accountId" element={<AccountDetailsPage />} />
       </Routes>
       </AuthWrapper>
     </Router>

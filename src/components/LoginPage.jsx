@@ -27,16 +27,23 @@ const LoginPage = () => {
         }
     };
 
-    const handleSignup = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.post(`${API_URL}/auth/signup`, { email: signupEmail, password: signupPassword });
-            setIsSignup(false);
-            setError('Signup successful! Please log in.');
-        } catch (err) {
-            setError('Signup failed!');
-        }
-    };
+const [signupName, setSignupName] = useState('');
+
+const handleSignup = async (e) => {
+    e.preventDefault();
+    try {
+        await axios.post(`${API_URL}/auth/signup`, {
+            email: signupEmail,
+            password: signupPassword,
+            name: signupName  // Ensure the name is included
+        });
+        setIsSignup(false);
+        setError('Signup successful! Please log in.');
+    } catch (err) {
+        setError('Signup failed! ' + (err.response?.data?.message || ''));
+    }
+};
+
 
     return (
         <div className="container">
@@ -61,6 +68,14 @@ const LoginPage = () => {
                             placeholder="Password"
                             required
                         />
+
+<input
+    type="text"
+    value={signupName}
+    onChange={(e) => setSignupName(e.target.value)}
+    placeholder="Name"
+    required
+/>
                         <button type="submit">Sign Up</button>
                         <button type="button" onClick={() => setIsSignup(false)}>Back to Login</button>
                     </form>
