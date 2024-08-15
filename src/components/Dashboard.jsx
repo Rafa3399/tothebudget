@@ -3,6 +3,8 @@ import axios from 'axios';
 import { AuthContext } from "../context/auth.context";
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const Dashboard = () => {
     const [showForm, setShowForm] = useState(null);
@@ -12,6 +14,7 @@ const Dashboard = () => {
     });
     const [accounts, setAccounts] = useState([]);
     const [error, setError] = useState('');
+    const [editingAccountId, setEditingAccountId] = useState(null);
 
     const { user } = useContext(AuthContext);
     const userId = user?._id; 
@@ -41,17 +44,52 @@ const Dashboard = () => {
         }
 
         try {
-            const response = await axios.post(`${API_URL}/api/accounts`, {
-                name: formData.accountName,
-                balance: formData.accountBalance,
-                user: userId
-            });
+            if (editingAccountId) {
+                // Update existing account
+                await axios.put(`${API_URL}/api/accounts/${editingAccountId}`, {
+                    name: formData.accountName,
+                    balance: formData.accountBalance,
+                });
+                
+                setAccounts(accounts.map(account =>
+                    account._id === editingAccountId
+                        ? { ...account, name: formData.accountName, balance: formData.accountBalance }
+                        : account
+                ));
+            } else {
+                // Create new account
+                const response = await axios.post(`${API_URL}/api/accounts`, {
+                    name: formData.accountName,
+                    balance: formData.accountBalance,
+                    user: userId
+                });
 
-            setAccounts([...accounts, response.data]);
+                setAccounts([...accounts, response.data]);
+            }
+
             setFormData({ accountName: '', accountBalance: 0 });
             setShowForm(null);
+            setEditingAccountId(null);
         } catch (err) {
             setError('Operation failed!');
+        }
+    };
+
+    const handleEdit = (account) => {
+        setFormData({
+            accountName: account.name,
+            accountBalance: account.balance,
+        });
+        setEditingAccountId(account._id);
+        setShowForm('account');
+    };
+
+    const handleDelete = async (accountId) => {
+        try {
+            await axios.delete(`${API_URL}/api/accounts/${accountId}`);
+            setAccounts(accounts.filter(account => account._id !== accountId));
+        } catch (err) {
+            setError('Failed to delete account');
         }
     };
 
@@ -63,41 +101,51 @@ const Dashboard = () => {
         <div className="container">
             <h1>Welcome, {user?.name}!</h1>
 
-            <fieldset>
-                <legend>Accounts</legend>
-                {accounts.length > 0 ? (
-                    accounts.map(account => (
-                        <div key={account._id} className="account-card" onClick={() => handleAccountClick(account._id)}>
-                            <h3>{account.name}</h3>
-                            <p>Balance: ${account.balance}</p>
-                        </div>
-                    ))
-                ) : (
-                    <p>No accounts yet. Please add one!</p>
-                )}
-                <button onClick={() => setShowForm('account')}>Add Account</button>
-            </fieldset>
+            <div className="accounts-section">
+                <fieldset>
+                    <legend>Accounts</legend>
+                    {accounts.length > 0 ? (
+                        accounts.map(account => (
+                            <div key={account._id} className="account-card">
+                                <h3 onClick={() => handleAccountClick(account._id)}>{account.name}</h3>
+                                <p>Balance: ${account.balance}</p>
+                                <div className="account-actions">
+                                    <button onClick={() => handleEdit(account)} className="action-btn">
+                                        <FontAwesomeIcon icon={faEdit} />
+                                    </button>
+                                    <button onClick={() => handleDelete(account._id)} className="action-btn">
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p>No accounts yet. Please add one!</p>
+                    )}
+                    <button onClick={() => setShowForm('account')} className="add-account-btn">Add Account</button>
+                </fieldset>
 
-            {showForm === 'account' && (
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        name="accountName"
-                        value={formData.accountName}
-                        onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
-                        placeholder="Account Name"
-                    />
-                    <input
-                        type="number"
-                        name="accountBalance"
-                        value={formData.accountBalance}
-                        onChange={(e) => setFormData({ ...formData, accountBalance: parseFloat(e.target.value) })}
-                        placeholder="Starting Balance"
-                    />
-                    <button type="submit">Add Account</button>
-                    <button type="button" onClick={() => setShowForm(null)}>Cancel</button>
-                </form>
-            )}
+                {showForm === 'account' && (
+                    <form onSubmit={handleSubmit} className="account-form">
+                        <input
+                            type="text"
+                            name="accountName"
+                            value={formData.accountName}
+                            onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
+                            placeholder="Account Name"
+                        />
+                        <input
+                            type="number"
+                            name="accountBalance"
+                            value={formData.accountBalance}
+                            onChange={(e) => setFormData({ ...formData, accountBalance: parseFloat(e.target.value) })}
+                            placeholder="Starting Balance"
+                        />
+                        <button type="submit">{editingAccountId ? 'Update Account' : 'Add Account'}</button>
+                        <button type="button" onClick={() => setShowForm(null)} className="cancel-btn">Cancel</button>
+                    </form>
+                )}
+            </div>
 
             {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
