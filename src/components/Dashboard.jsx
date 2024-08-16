@@ -1,3 +1,4 @@
+// components/Dashboard.jsx
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from "../context/auth.context";
@@ -7,21 +8,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const Dashboard = () => {
-    const [showForm, setShowForm] = useState(null);
+    const [showForm, setShowForm] = useState(null)
     const [formData, setFormData] = useState({
         accountName: '',
         accountBalance: 0,
     });
-    const [accounts, setAccounts] = useState([]);
-    const [error, setError] = useState('');
-    const [editingAccountId, setEditingAccountId] = useState(null);
+    const [accounts, setAccounts] = useState([])
+    const [error, setError] = useState('')
+    const [editingAccountId, setEditingAccountId] = useState(null)
 
-    const { user } = useContext(AuthContext);
-    const userId = user?._id; 
-    const navigate = useNavigate();
+    const { user } = useContext(AuthContext)
+    const userId = user?._id
+    const navigate = useNavigate()
 
     useEffect(() => {
-        if (!userId) return;
+        if (!userId) return
 
         const fetchAccounts = async () => {
             try {
@@ -30,39 +31,37 @@ const Dashboard = () => {
             } catch (err) {
                 setError('Failed to fetch accounts');
             }
-        };
+        }
 
         fetchAccounts();
-    }, [userId]);
+    }, [userId])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!formData.accountName.trim() || formData.accountBalance === '') {
-            setError('Please provide all required fields.');
-            return;
+            setError('Please provide all required fields.')
+            return
         }
 
         try {
             if (editingAccountId) {
-                // Update existing account
                 await axios.put(`${API_URL}/api/accounts/${editingAccountId}`, {
                     name: formData.accountName,
                     balance: formData.accountBalance,
-                });
+                })
                 
                 setAccounts(accounts.map(account =>
                     account._id === editingAccountId
                         ? { ...account, name: formData.accountName, balance: formData.accountBalance }
                         : account
-                ));
+                ))
             } else {
-                // Create new account
                 const response = await axios.post(`${API_URL}/api/accounts`, {
                     name: formData.accountName,
                     balance: formData.accountBalance,
                     user: userId
-                });
+                })
 
                 setAccounts([...accounts, response.data]);
             }
@@ -71,7 +70,7 @@ const Dashboard = () => {
             setShowForm(null);
             setEditingAccountId(null);
         } catch (err) {
-            setError('Operation failed!');
+            setError('Operation failed!')
         }
     };
 
@@ -82,20 +81,20 @@ const Dashboard = () => {
         });
         setEditingAccountId(account._id);
         setShowForm('account');
-    };
+    }
 
     const handleDelete = async (accountId) => {
         try {
-            await axios.delete(`${API_URL}/api/accounts/${accountId}`);
-            setAccounts(accounts.filter(account => account._id !== accountId));
+            await axios.delete(`${API_URL}/api/accounts/${accountId}`)
+            setAccounts(accounts.filter(account => account._id !== accountId))
         } catch (err) {
             setError('Failed to delete account');
         }
-    };
+    }
 
     const handleAccountClick = (accountId) => {
-        navigate(`/accounts/${accountId}`);
-    };
+        navigate(`/accounts/${accountId}`)
+    }
 
     return (
         <div className="container">
@@ -108,7 +107,7 @@ const Dashboard = () => {
                         accounts.map(account => (
                             <div key={account._id} className="account-card">
                                 <h3 onClick={() => handleAccountClick(account._id)}>{account.name}</h3>
-                                <p>Balance: ${account.balance}</p>
+                                <p>Balance: {account.balance}€</p>
                                 <div className="account-actions">
                                     <button onClick={() => handleEdit(account)} className="action-btn">
                                         <FontAwesomeIcon icon={faEdit} />

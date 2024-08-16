@@ -1,46 +1,48 @@
-import { useState, useContext } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from "../context/auth.context";
-import { API_URL } from '../config.js';
+// components/LoginPage.jsx
+import { useState, useContext } from 'react'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import { AuthContext } from "../context/auth.context"
+import { API_URL } from '../config.js'
 
 const LoginPage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [signupEmail, setSignupEmail] = useState('');
-    const [signupPassword, setSignupPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isSignup, setIsSignup] = useState(false);
-    const navigate = useNavigate();
-    const { authenticateUser } = useContext(AuthContext);
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [signupEmail, setSignupEmail] = useState('')
+    const [signupPassword, setSignupPassword] = useState('')
+    const [error, setError] = useState('')
+    const [isSignup, setIsSignup] = useState(false)
+    const navigate = useNavigate()
+    const { authenticateUser } = useContext(AuthContext)
 
     const handleLogin = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
         try {
-            const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-            const { authToken } = response.data; 
-            localStorage.setItem('authToken', authToken); 
-            await authenticateUser(); 
-            navigate('/dashboard');
+            const response = await axios.post(`${API_URL}/auth/login`, { email, password })
+            const { authToken } = response.data
+            localStorage.setItem('authToken', authToken);
+            
+            await authenticateUser();
+            navigate('/dashboard')
         } catch (err) {
-            setError('Login failed!');
+            setError('Login failed!')
         }
     };
 
-const [signupName, setSignupName] = useState('');
+const [signupName, setSignupName] = useState('')
 
 const handleSignup = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
         await axios.post(`${API_URL}/auth/signup`, {
             email: signupEmail,
             password: signupPassword,
-            name: signupName  // Ensure the name is included
+            name: signupName  
         });
         setIsSignup(false);
-        setError('Signup successful! Please log in.');
+        setError('Signup successful! Please log in.')
     } catch (err) {
-        setError('Signup failed! ' + (err.response?.data?.message || ''));
+        setError('Signup failed! ' + (err.response?.data?.message || ''))
     }
 };
 
@@ -106,7 +108,7 @@ const handleSignup = async (e) => {
             
             {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
-    );
-};
+    )
+}
 
-export default LoginPage;
+export default LoginPage
