@@ -430,8 +430,8 @@ const TransactionsTable = ({ expenses, profits, handleDelete, handleEdit }) => (
   <table style={tableStyle}>
     <thead>
       <tr>
-        <th style={headerCellStyle}>Transaction Name</th>
         <th style={headerCellStyle}>Category</th>
+        <th style={headerCellStyle}>Description</th>
         <th style={headerCellStyle}>Amount</th>
         <th style={headerCellStyle}>Date</th>
         <th style={headerCellStyle}>Edit/Delete</th>
