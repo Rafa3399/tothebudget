@@ -452,7 +452,7 @@ const TransactionsTable = ({ expenses, profits, handleDelete, handleEdit }) => (
       ))}
       {profits.map(profit => (
         <tr key={profit._id} style={rowStyle}>
-          <td style={cellStyle}>{profit.description || 'No Description'}</td>
+          <td style={cellStyle}>{profit.description}</td>
           <td style={cellStyle}>{profit.category.name}</td>
           <td style={{ ...cellStyle, color: 'green' }}>{profit.amount}€</td>
           <td style={cellStyle}>{new Date(profit.date).toLocaleDateString()}</td>
