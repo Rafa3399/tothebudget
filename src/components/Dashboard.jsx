@@ -1,67 +1,80 @@
-// components/Dashboard.jsx
+// /components/Dashboard.jsx
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from "../context/auth.context";
 import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../config.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { API_URL } from '../config.js';
 
 const Dashboard = () => {
-    const [showForm, setShowForm] = useState(null)
+    const [showForm, setShowForm] = useState(null);
     const [formData, setFormData] = useState({
         accountName: '',
         accountBalance: 0,
     });
-    const [accounts, setAccounts] = useState([])
-    const [error, setError] = useState('')
-    const [editingAccountId, setEditingAccountId] = useState(null)
+    const [accounts, setAccounts] = useState([]);
+    const [error, setError] = useState('');
+    const [editingAccountId, setEditingAccountId] = useState(null);
 
-    const { user } = useContext(AuthContext)
-    const userId = user?._id
-    const navigate = useNavigate()
+    const { user } = useContext(AuthContext);
+    const userId = user?._id;
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (!userId) return
+        if (!userId) return;
 
         const fetchAccounts = async () => {
             try {
-                const response = await axios.get(`${API_URL}/api/accounts/${userId}`);
+                const token = localStorage.getItem("authToken"); 
+                if (!token) {
+                    setError('Authentication token not found.');
+                    return;
+                }
+                const response = await axios.get(`${API_URL}/api/accounts/${userId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 setAccounts(response.data);
             } catch (err) {
                 setError('Failed to fetch accounts');
+                console.error(err);
             }
         }
 
         fetchAccounts();
-    }, [userId])
+    }, [userId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.accountName.trim() || formData.accountBalance === '') {
-            setError('Please provide all required fields.')
-            return
+        if (!formData.accountName.trim()) {
+            setError('Please provide an account name.');
+            return;
         }
 
         try {
+            const token = localStorage.getItem("authToken"); 
             if (editingAccountId) {
                 await axios.put(`${API_URL}/api/accounts/${editingAccountId}`, {
                     name: formData.accountName,
                     balance: formData.accountBalance,
-                })
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 
                 setAccounts(accounts.map(account =>
                     account._id === editingAccountId
-                        ? { ...account, name: formData.accountName, balance: formData.accountBalance }
+                        ? { ...account, name: formData.accountName }
                         : account
-                ))
+                ));
             } else {
                 const response = await axios.post(`${API_URL}/api/accounts`, {
                     name: formData.accountName,
                     balance: formData.accountBalance,
                     user: userId
-                })
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
 
                 setAccounts([...accounts, response.data]);
             }
@@ -70,7 +83,8 @@ const Dashboard = () => {
             setShowForm(null);
             setEditingAccountId(null);
         } catch (err) {
-            setError('Operation failed!')
+            setError('Operation failed!');
+            console.error("Error submitting form:", err);
         }
     };
 
@@ -84,16 +98,23 @@ const Dashboard = () => {
     }
 
     const handleDelete = async (accountId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this account? This action cannot be undone.");
+        if (!confirmDelete) return;
+
         try {
-            await axios.delete(`${API_URL}/api/accounts/${accountId}`)
-            setAccounts(accounts.filter(account => account._id !== accountId))
+            const token = localStorage.getItem("authToken");
+            await axios.delete(`${API_URL}/api/accounts/${accountId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAccounts(accounts.filter(account => account._id !== accountId));
         } catch (err) {
             setError('Failed to delete account');
+            console.error("Error deleting account:", err);
         }
-    }
+    };
 
     const handleAccountClick = (accountId) => {
-        navigate(`/accounts/${accountId}`)
+        navigate(`/accounts/${accountId}`);
     }
 
     return (
@@ -133,13 +154,16 @@ const Dashboard = () => {
                             onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
                             placeholder="Account Name"
                         />
-                        <input
-                            type="number"
-                            name="accountBalance"
-                            value={formData.accountBalance}
-                            onChange={(e) => setFormData({ ...formData, accountBalance: parseFloat(e.target.value) })}
-                            placeholder="Starting Balance"
-                        />
+                        {/* Hide or disable the balance input during editing */}
+                        {editingAccountId === null && (
+                            <input
+                                type="number"
+                                name="accountBalance"
+                                value={formData.accountBalance}
+                                onChange={(e) => setFormData({ ...formData, accountBalance: parseFloat(e.target.value) })}
+                                placeholder="Starting Balance"
+                            />
+                        )}
                         <button type="submit">{editingAccountId ? 'Update Account' : 'Add Account'}</button>
                         <button type="button" onClick={() => setShowForm(null)} className="cancel-btn">Cancel</button>
                     </form>

@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useState } from "react";
+// /components/AccountDetailsPage.jsx
+import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../context/auth.context";
@@ -6,18 +7,18 @@ import { API_URL } from "../config.js";
 import { Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
 
-const AccountDetails = () => {
-  const { accountId } = useParams()
-  const navigate = useNavigate()
-  const { user, isLoading, isLoggedIn } = useContext(AuthContext)
-  const [account, setAccount] = useState(null) // State to store account details
-  const [expenses, setExpenses] = useState([])
-  const [profits, setProfits] = useState([])
-  const [error, setError] = useState("")
-  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false)
-  const [isProfitModalOpen, setIsProfitModalOpen] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editingTransactionId, setEditingTransactionId] = useState(null)
+const AccountDetailsPage = () => {
+  const { accountId } = useParams();
+  const navigate = useNavigate();
+  const { user, isLoading, isLoggedIn } = useContext(AuthContext);
+  const [account, setAccount] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [profits, setProfits] = useState([]);
+  const [error, setError] = useState("");
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isProfitModalOpen, setIsProfitModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState(null);
 
   const [expenseData, setExpenseData] = useState({
     amount: '',
@@ -42,11 +43,11 @@ const AccountDetails = () => {
   const expenseCategories = [
     'Rent', 'Mortgage', 'Food', 'Transport', 'Utilities', 
     'Entertainment', 'Healthcare', 'Travel', 'Other'
-  ]
+  ];
 
   const profitCategories = [
     'Salary', 'Investment', 'Gift', 'Business', 'Other'
-  ]
+  ];
 
   useEffect(() => {
     if (isLoading) return;
@@ -54,39 +55,77 @@ const AccountDetails = () => {
       navigate("/login");
       return;
     }
-
     const fetchAccountDetails = async () => {
       try {
-        const token = localStorage.getItem("authToken")
+         const token = localStorage.getItem("authToken");
+         if (!token) {
+           setError("Authentication token not found");
+           navigate("/login");
+           return;
+         }
+   
+         const accountRes = await axios.get(`${API_URL}/api/accounts/${accountId}`, {
+           headers: { Authorization: `Bearer ${token}` },
+         });
+   
+         console.log("Fetched Account:", accountRes.data);
+   
+         if (accountRes.data && accountRes.data._id) {
+           setAccount(accountRes.data);
+         } else {
+           setError("Account not found");
+           console.error("No account found for ID:", accountId);
+         }
+   
+         const expensesRes = await axios.get(`${API_URL}/api/expenses/account/${accountId}`, {
+           headers: { Authorization: `Bearer ${token}` },
+         });
+         console.log("Fetched Expenses:", expensesRes.data);
+         setExpenses(expensesRes.data);
+   
+         const profitsRes = await axios.get(`${API_URL}/api/profits/account/${accountId}`, {
+           headers: { Authorization: `Bearer ${token}` },
+         });
+         console.log("Fetched Profits:", profitsRes.data);
+         setProfits(profitsRes.data);
+      } catch (err) {
+         console.error("Error fetching account details:", err.response || err);
+         setError("Failed to fetch account details");
+      }
+   };
+   
+    const fetchTransactions = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
         if (!token) {
-          setError("Authentication token not found")
+          setError("Authentication token not found");
           navigate("/login");
-          return
+          return;
         }
-
-        const accountRes = await axios.get(`${API_URL}/api/accounts/${accountId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        console.log("Fetched Account:", accountRes.data); 
-        setAccount(accountRes.data);
 
         const expensesRes = await axios.get(`${API_URL}/api/expenses/account/${accountId}`, {
           headers: { Authorization: `Bearer ${token}` },
-        })
+        });
         setExpenses(expensesRes.data);
 
         const profitsRes = await axios.get(`${API_URL}/api/profits/account/${accountId}`, {
           headers: { Authorization: `Bearer ${token}` },
-        })
+        });
         setProfits(profitsRes.data);
       } catch (err) {
-        console.error("Error fetching account details:", err.response || err);
-        setError("Failed to fetch account details");
+        console.error("Error fetching transactions:", err.response || err);
+        setError("Failed to fetch transactions");
       }
-    }
+    };
 
-    fetchAccountDetails();
+    fetchTransactions();
   }, [accountId, isLoading, isLoggedIn, navigate]);
+
+  const calculateBalance = () => {
+    const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
+    const totalProfits = profits.reduce((total, profit) => total + profit.amount, 0);
+    return totalProfits - totalExpenses;
+  };
 
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
@@ -95,8 +134,8 @@ const AccountDetails = () => {
 
       const amount = parseFloat(expenseData.amount);
       if (isNaN(amount) || !expenseData.category.name.trim()) {
-        setError("Amount must be a number and category name must be provided")
-        return
+        setError("Amount must be a number and category name must be provided");
+        return;
       }
 
       const expensePayload = {
@@ -108,41 +147,41 @@ const AccountDetails = () => {
         description: expenseData.description,
         date: new Date(expenseData.date),
         account: accountId,
-      }
+      };
 
       if (isEditing && editingTransactionId) {
         await axios.put(
           `${API_URL}/api/expenses/${editingTransactionId}`,
           expensePayload,
           { headers: { Authorization: `Bearer ${token}` } }
-        )
-        setExpenses(expenses.map(expense => expense._id === editingTransactionId ? { ...expensePayload, _id: editingTransactionId } : expense))
+        );
+        setExpenses(expenses.map(expense => expense._id === editingTransactionId ? { ...expensePayload, _id: editingTransactionId } : expense));
       } else {
         const response = await axios.post(
           `${API_URL}/api/expenses`,
           expensePayload,
           { headers: { Authorization: `Bearer ${token}` } }
-        )
+        );
         setExpenses([...expenses, response.data]);
       }
 
-      setExpenseData({ amount: '', category: { name: '', default: true }, description: '', date: new Date().toISOString().slice(0, 10) })
-      setIsExpenseModalOpen(false)
-      setIsEditing(false)
-      setEditingTransactionId(null)
+      setExpenseData({ amount: '', category: { name: '', default: true }, description: '', date: new Date().toISOString().slice(0, 10) });
+      setIsExpenseModalOpen(false);
+      setIsEditing(false);
+      setEditingTransactionId(null);
     } catch (err) {
-      console.error("Error creating/updating expense:", err.response || err)
-      setError("Failed to create/update expense")
+      console.error("Error creating/updating expense:", err.response || err);
+      setError("Failed to create/update expense");
     }
   };
 
   const handleProfitSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      const token = localStorage.getItem("authToken")
-      const amount = parseFloat(profitData.amount)
+      const token = localStorage.getItem("authToken");
+      const amount = parseFloat(profitData.amount);
       if (isNaN(amount) || !profitData.category.name.trim()) {
-        setError("Amount must be a number and category name must be provided")
+        setError("Amount must be a number and category name must be provided");
         return;
       }
 
@@ -155,7 +194,7 @@ const AccountDetails = () => {
         description: profitData.description, 
         date: new Date(profitData.date),
         account: accountId,
-      }
+      };
 
       if (isEditing && editingTransactionId) {
         await axios.put(
@@ -163,50 +202,49 @@ const AccountDetails = () => {
           profitPayload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setProfits(profits.map(profit => profit._id === editingTransactionId ? { ...profitPayload, _id: editingTransactionId } : profit))
+        setProfits(profits.map(profit => profit._id === editingTransactionId ? { ...profitPayload, _id: editingTransactionId } : profit));
       } else {
-        // Create new profit
         const response = await axios.post(
           `${API_URL}/api/profits`,
           profitPayload,
           { headers: { Authorization: `Bearer ${token}` } }
-        )
-        setProfits([...profits, response.data])
+        );
+        setProfits([...profits, response.data]);
       }
 
-      setProfitData({ amount: '', category: { name: '', default: true }, description: '', date: new Date().toISOString().slice(0, 10) })
-      setIsProfitModalOpen(false)
-      setIsEditing(false)
-      setEditingTransactionId(null)
+      setProfitData({ amount: '', category: { name: '', default: true }, description: '', date: new Date().toISOString().slice(0, 10) });
+      setIsProfitModalOpen(false);
+      setIsEditing(false);
+      setEditingTransactionId(null);
     } catch (err) {
-      console.error("Error creating/updating profit:", err.response || err)
-      setError("Failed to create/update profit")
+      console.error("Error creating/updating profit:", err.response || err);
+      setError("Failed to create/update profit");
     }
   };
 
   const handleDelete = async (id, type) => {
     try {
-      const token = localStorage.getItem("authToken")
+      const token = localStorage.getItem("authToken");
       if (type === 'expense') {
         await axios.delete(`${API_URL}/api/expenses/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setExpenses(expenses.filter(expense => expense._id !== id))
+        setExpenses(expenses.filter(expense => expense._id !== id));
       } else {
         await axios.delete(`${API_URL}/api/profits/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setProfits(profits.filter(profit => profit._id !== id))
+        setProfits(profits.filter(profit => profit._id !== id));
       }
     } catch (err) {
-      console.error("Error deleting transaction:", err.response || err)
+      console.error("Error deleting transaction:", err.response || err);
       setError("Failed to delete transaction");
     }
   };
 
   const handleEdit = (transaction, type) => {
-    setIsEditing(true)
-    setEditingTransactionId(transaction._id)
+    setIsEditing(true);
+    setEditingTransactionId(transaction._id);
     if (type === 'expense') {
       setExpenseData({
         amount: transaction.amount,
@@ -216,7 +254,7 @@ const AccountDetails = () => {
         },
         description: transaction.description,
         date: new Date(transaction.date).toISOString().slice(0, 10),
-      })
+      });
       setIsExpenseModalOpen(true);
     } else {
       setProfitData({
@@ -227,36 +265,44 @@ const AccountDetails = () => {
         },
         description: transaction.description, 
         date: new Date(transaction.date).toISOString().slice(0, 10),
-      })
+      });
       setIsProfitModalOpen(true);
     }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {account && (
-        <div>
-          <h1>{account.name}</h1>
-          <h2>Balance: {account.balance}€</h2>
-        </div>
+      {account ? (
+        <>
+          <div>
+            <h1>{account.name}</h1>
+            <h2>Balance: {calculateBalance()}€</h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ width: '40%' }}>
+              <h2>Transactions</h2>
+              <PieChart expenses={expenses} profits={profits} />
+            </div>
+            <div style={{ width: '55%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2>All Transactions</h2>
+                <div style={{ display: 'flex' }}>
+                  <button onClick={() => setIsExpenseModalOpen(true)} style={addButtonStyle}>-</button>
+                  <button onClick={() => setIsProfitModalOpen(true)} style={addButtonStyle}>+</button>
+                </div>
+              </div>
+              <TransactionsTable 
+                expenses={expenses} 
+                profits={profits} 
+                handleDelete={handleDelete} 
+                handleEdit={handleEdit} 
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <p>Loading account details...</p>
       )}
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
-        <div style={{ width: '40%' }}>
-          <h2>Transactions</h2>
-          <PieChart expenses={expenses} profits={profits} />
-        </div>
-        <div style={{ width: '55%' }}>
-          <h3>All Transactions</h3>
-          <TransactionsTable 
-            expenses={expenses} 
-            profits={profits} 
-            handleDelete={handleDelete} 
-            handleEdit={handleEdit} 
-          />
-          <button onClick={() => setIsExpenseModalOpen(true)}>Add Expense</button>
-          <button onClick={() => setIsProfitModalOpen(true)}>Add Profit</button>
-        </div>
-      </div>
 
       {isExpenseModalOpen && (
         <div className="modal">
@@ -347,9 +393,20 @@ const AccountDetails = () => {
   );
 };
 
+const addButtonStyle = {
+  margin: '0 5px',
+  padding: '5px 10px',
+  fontSize: '16px',
+  backgroundColor: '#4CAF50',
+  color: 'white',
+  border: '1px solid #4CAF50',
+  borderRadius: '4px',
+  cursor: 'pointer',
+};
+
 const PieChart = ({ expenses, profits }) => {
-  const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0)
-  const totalProfits = profits.reduce((total, profit) => total + profit.amount, 0)
+  const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
+  const totalProfits = profits.reduce((total, profit) => total + profit.amount, 0);
   const total = totalExpenses + totalProfits;
 
   const data = {
@@ -370,38 +427,38 @@ const PieChart = ({ expenses, profits }) => {
 };
 
 const TransactionsTable = ({ expenses, profits, handleDelete, handleEdit }) => (
-  <table>
+  <table style={tableStyle}>
     <thead>
       <tr>
-        <th>Transaction Name</th>
-        <th>Transaction Type</th>
-        <th>Amount</th>
-        <th>Date</th>
-        <th>Edit/Delete</th>
+        <th style={headerCellStyle}>Transaction Name</th>
+        <th style={headerCellStyle}>Category</th>
+        <th style={headerCellStyle}>Amount</th>
+        <th style={headerCellStyle}>Date</th>
+        <th style={headerCellStyle}>Edit/Delete</th>
       </tr>
     </thead>
     <tbody>
       {expenses.map(expense => (
-        <tr key={expense._id}>
-          <td>{expense.description}</td>
-          <td>EXPENSE</td>
-          <td>-{expense.amount}€</td>
-          <td>{new Date(expense.date).toLocaleDateString()}</td>
-          <td>
-            <button onClick={() => handleEdit(expense, 'expense')}>Edit</button>
-            <button onClick={() => handleDelete(expense._id, 'expense')}>Delete</button>
+        <tr key={expense._id} style={rowStyle}>
+          <td style={cellStyle}>{expense.description}</td>
+          <td style={cellStyle}>{expense.category.name}</td>
+          <td style={{ ...cellStyle, color: 'red' }}>-{expense.amount}€</td>
+          <td style={cellStyle}>{new Date(expense.date).toLocaleDateString()}</td>
+          <td style={cellStyle}>
+            <button style={editButtonStyle} onClick={() => handleEdit(expense, 'expense')}>Edit</button>
+            <button style={deleteButtonStyle} onClick={() => handleDelete(expense._id, 'expense')}>Delete</button>
           </td>
         </tr>
       ))}
       {profits.map(profit => (
-        <tr key={profit._id}>
-          <td>{profit.description || 'No Description'}</td>
-          <td>PROFIT</td>
-          <td>{profit.amount}€</td>
-          <td>{new Date(profit.date).toLocaleDateString()}</td>
-          <td>
-            <button onClick={() => handleEdit(profit, 'profit')}>Edit</button>
-            <button onClick={() => handleDelete(profit._id, 'profit')}>Delete</button>
+        <tr key={profit._id} style={rowStyle}>
+          <td style={cellStyle}>{profit.description || 'No Description'}</td>
+          <td style={cellStyle}>{profit.category.name}</td>
+          <td style={{ ...cellStyle, color: 'green' }}>{profit.amount}€</td>
+          <td style={cellStyle}>{new Date(profit.date).toLocaleDateString()}</td>
+          <td style={cellStyle}>
+            <button style={editButtonStyle} onClick={() => handleEdit(profit, 'profit')}>Edit</button>
+            <button style={deleteButtonStyle} onClick={() => handleDelete(profit._id, 'profit')}>Delete</button>
           </td>
         </tr>
       ))}
@@ -409,4 +466,47 @@ const TransactionsTable = ({ expenses, profits, handleDelete, handleEdit }) => (
   </table>
 );
 
-export default AccountDetails;
+const tableStyle = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  marginTop: '20px',
+};
+
+const headerCellStyle = {
+  padding: '10px',
+  backgroundColor: '#f1f1f1',
+  color: 'black',
+  textAlign: 'left',
+  borderBottom: '2px solid #ddd',
+};
+
+const rowStyle = {
+  borderBottom: '1px solid #ddd',
+};
+
+const cellStyle = {
+  padding: '8px',
+  textAlign: 'left',
+};
+
+const editButtonStyle = {
+  marginRight: '10px',
+  padding: '5px 10px',
+  backgroundColor: '#4CAF50',
+  color: 'white',
+  border: 'none',
+  borderRadius: '4px',
+  cursor: 'pointer',
+};
+
+const deleteButtonStyle = {
+  padding: '5px 10px',
+  backgroundColor: '#f44336',
+  color: 'white',
+  border: 'none',
+  borderRadius: '4px',
+  cursor: 'pointer',
+};
+
+export default AccountDetailsPage;
+

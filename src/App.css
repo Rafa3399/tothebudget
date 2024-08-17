@@ -112,7 +112,15 @@ legend {
   font-weight: bold;
   color: #333;
 }
- 
+.header{
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+}
+.back-btn{
+  width: 6%;
+
+}
 /* styles.css or Dashboard.module.css */
 .account-card {
   border: 1px solid #ddd;
@@ -231,4 +239,23 @@ legend {
 
 .modal-content button[type="button"]:hover {
   background-color: #e31b0c;
+}
+.contact-section {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.contact-section h3 {
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.contact-section p a {
+  color: #007bff;
+  text-decoration: none;
+  margin: 0 10px;
+}
+
+.contact-section p a:hover {
+  text-decoration: underline;
 }
