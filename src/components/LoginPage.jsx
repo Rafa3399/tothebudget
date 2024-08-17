@@ -84,7 +84,7 @@ const LoginPage = () => {
     };
     return (
         <div className="container">
-            <h1>Expense Tracker</h1>
+            <h1>To the Budget</h1>
             <p>Manage your finances efficiently with our Expense Tracker.</p>
             
             {isSignup ? (
